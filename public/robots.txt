@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Bloquear rutas privadas
+Disallow: /api/
+Disallow: /admin/
+
+Sitemap: https://devforge.dev/sitemap.xml
