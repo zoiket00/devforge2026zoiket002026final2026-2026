@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  lint-and-type-check:
-    name: Lint & Type Check
+  type-check:
+    name: Type Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,13 +23,10 @@ jobs:
       - name: Type check
         run: npm run type-check
 
-      # - name: Lint
-      #   run: npm run lint
-
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: lint-and-type-check
+    needs: type-check
     env:
       NEXT_PUBLIC_SITE_URL: https://devforge.dev
     steps:
