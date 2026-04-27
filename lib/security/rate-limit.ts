@@ -5,8 +5,8 @@
 // └─────────────────────────────────────────────────────────────┘
 
 interface RateLimitConfig {
-  requests: number;   // Máx. requests
-  window: number;     // Ventana en segundos
+  requests: number;
+  window: number;
 }
 
 interface RateLimitResult {
@@ -25,10 +25,8 @@ interface RateLimitStore {
   };
 }
 
-// ── Store en memoria (en producción: usar Redis) ─────────────────
 const store: RateLimitStore = {};
 
-// ── Limpiar store cada 10 minutos ────────────────────────────────
 if (typeof setInterval !== "undefined") {
   setInterval(() => {
     const now = Date.now();
@@ -40,9 +38,6 @@ if (typeof setInterval !== "undefined") {
   }, 600_000);
 }
 
-/**
- * Rate limiter principal con Sliding Window
- */
 export async function rateLimit(
   identifier: string,
   route: string,
@@ -52,7 +47,6 @@ export async function rateLimit(
   const now = Date.now();
   const windowMs = config.window * 1000;
 
-  // Inicializar si no existe
   if (!store[key]) {
     store[key] = {
       count: 0,
@@ -63,7 +57,6 @@ export async function rateLimit(
 
   const entry = store[key];
 
-  // Reiniciar ventana si expiró
   if (now - entry.firstRequest > windowMs) {
     entry.count = 0;
     entry.firstRequest = now;
@@ -85,9 +78,6 @@ export async function rateLimit(
   };
 }
 
-/**
- * Rate limiter por usuario autenticado
- */
 export async function userRateLimit(
   userId: string,
   action: string,
@@ -96,45 +86,33 @@ export async function userRateLimit(
   return rateLimit(`user:${userId}`, action, config);
 }
 
-/**
- * Rate limiter específico para login (anti-brute-force)
- */
 export async function loginRateLimit(ip: string): Promise<RateLimitResult> {
   return rateLimit(ip, "login", {
-    requests: 5,    // 5 intentos
-    window: 900,    // 15 minutos
+    requests: 5,
+    window: 900,
   });
 }
 
-/**
- * Rate limiter para reset de contraseña
- */
 export async function passwordResetRateLimit(email: string): Promise<RateLimitResult> {
   return rateLimit(`email:${email}`, "password-reset", {
-    requests: 3,    // 3 intentos
-    window: 3600,   // 1 hora
+    requests: 3,
+    window: 3600,
   });
 }
 
-/**
- * Rate limiter para API keys
- */
 export async function apiKeyRateLimit(
   apiKey: string,
   tier: "free" | "pro" | "enterprise" = "free"
 ): Promise<RateLimitResult> {
   const tiers: Record<string, RateLimitConfig> = {
-    free:       { requests: 100,  window: 3600 },   // 100/hora
-    pro:        { requests: 5000, window: 3600 },   // 5000/hora
-    enterprise: { requests: 50000, window: 3600 },  // 50000/hora
+    free:       { requests: 100,  window: 3600 },
+    pro:        { requests: 5000, window: 3600 },
+    enterprise: { requests: 50000, window: 3600 },
   };
 
   return rateLimit(`apikey:${apiKey}`, "api", tiers[tier]);
 }
 
-/**
- * Middleware helper para Next.js API Routes
- */
 export function withRateLimit(
   handler: (req: Request) => Promise<Response>,
   config: RateLimitConfig = { requests: 10, window: 60 }
@@ -171,16 +149,13 @@ export function withRateLimit(
   };
 }
 
-/**
- * Token Bucket para burst control
- */
 export class TokenBucket {
   private tokens: number;
   private lastRefill: number;
 
   constructor(
     private capacity: number,
-    private refillRate: number  // tokens por segundo
+    private refillRate: number
   ) {
     this.tokens = capacity;
     this.lastRefill = Date.now();
