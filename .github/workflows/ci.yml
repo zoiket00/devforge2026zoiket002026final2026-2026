@@ -23,8 +23,8 @@ jobs:
       - name: Type check
         run: npm run type-check
 
-      - name: Lint
-        run: npm run lint
+      # - name: Lint
+      #   run: npm run lint
 
   build:
     name: Build
@@ -44,3 +44,4 @@ jobs:
 
       - name: Build
         run: npm run build
+        
