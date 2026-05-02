@@ -3,9 +3,9 @@
   "version": "2.0.0",
   "description": "DevForge Studio - Full-stack development studio website",
   "private": true,
-  "scripts": {
+ "scripts": {
   "dev": "next dev",
-  "build": "next build",
+  "build": "prisma generate && next build",
   "start": "next start",
   "lint": "next lint",
   "postinstall": "prisma generate"
