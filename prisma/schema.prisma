@@ -1,0 +1,436 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  email         String     @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  password      String?
+  role          UserRole   @default(USER)
+  status        UserStatus @default(ACTIVE)
+  accounts      Account[]
+  sessions      Session[]
+  projects      Project[]     @relation("ProjectOwner")
+  auditLogs     AuditLog[]
+  contactForms  ContactForm[] @relation("FormUser")
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  lastLogin     DateTime?
+  loginAttempts Int        @default(0)
+  lockedUntil   DateTime?
+
+  @@index([email])
+  @@index([role])
+  @@index([status])
+}
+
+enum UserRole {
+  ADMIN
+  MODERATOR
+  USER
+  GUEST
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DELETED
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Project {
+  id           String        @id @default(cuid())
+  title        String
+  slug         String        @unique
+  description  String
+  image        String?
+  featured     Boolean       @default(false)
+  status       ProjectStatus @default(DRAFT)
+  ownerId      String
+  owner        User          @relation("ProjectOwner", fields: [ownerId], references: [id])
+  technologies Technology[]
+  viewCount    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  publishedAt  DateTime?
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([featured])
+}
+
+enum ProjectStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Technology {
+  id        String    @id @default(cuid())
+  name      String
+  category  String
+  icon      String?
+  projects  Project[]
+  services  Service[]
+  createdAt DateTime  @default(now())
+
+  @@unique([name, category])
+}
+
+model Service {
+  id           String        @id @default(cuid())
+  title        String
+  slug         String        @unique
+  description  String
+  icon         String?
+  order        Int           @default(0)
+  status       ServiceStatus @default(ACTIVE)
+  technologies Technology[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([status])
+  @@index([order])
+}
+
+enum ServiceStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+model Testimonial {
+  id         String            @id @default(cuid())
+  clientName String
+  clientRole String?
+  company    String?
+  content    String
+  rating     Int               @default(5)
+  image      String?
+  featured   Boolean           @default(false)
+  status     TestimonialStatus @default(PENDING)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  @@index([status])
+  @@index([featured])
+}
+
+enum TestimonialStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ContactForm {
+  id        String       @id @default(cuid())
+  name      String
+  email     String
+  company   String?
+  service   String?
+  budget    String?
+  message   String
+  status    FormStatus   @default(NEW)
+  priority  FormPriority @default(NORMAL)
+  userId    String?
+  user      User?        @relation("FormUser", fields: [userId], references: [id])
+  ipAddress String?
+  userAgent String?
+  readAt    DateTime?
+  repliedAt DateTime?
+  reply     String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+enum FormStatus {
+  NEW
+  READ
+  IN_PROGRESS
+  REPLIED
+  CLOSED
+}
+
+enum FormPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model NewsletterSubscription {
+  id             String              @id @default(cuid())
+  email          String              @unique
+  name           String?
+  frequency      NewsletterFrequency @default(WEEKLY)
+  status         SubscriptionStatus  @default(ACTIVE)
+  confirmedAt    DateTime?
+  unsubscribedAt DateTime?
+  bounceCount    Int                 @default(0)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  @@index([status])
+  @@index([email])
+}
+
+enum NewsletterFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  UNSUBSCRIBED
+  BOUNCED
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  eventName  String
+  eventType  String
+  userId     String?
+  page       String?
+  referrer   String?
+  properties Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([eventName])
+  @@index([createdAt])
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  page      String
+  userId    String?
+  sessionId String?
+  duration  Int?
+  referrer  String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([page])
+  @@index([createdAt])
+}
+
+model Conversion {
+  id        String         @id @default(cuid())
+  type      ConversionType
+  userId    String?
+  value     Float?
+  metadata  Json?
+  createdAt DateTime       @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum ConversionType {
+  CONTACT_FORM
+  NEWSLETTER_SIGNUP
+  PROJECT_VIEW
+  CHAT_INTERACTION
+  DEMO_REQUEST
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  action    String
+  entity    String
+  entityId  String?
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  changes   Json?
+  ipAddress String?
+  userAgent String?
+  status    AuditStatus @default(SUCCESS)
+  error     String?
+  createdAt DateTime    @default(now())
+
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILURE
+  PENDING
+}
+
+model SystemLog {
+  id         String   @id @default(cuid())
+  level      LogLevel
+  message    String
+  category   String
+  metadata   Json?
+  stackTrace String?
+  createdAt  DateTime @default(now())
+
+  @@index([level])
+  @@index([category])
+  @@index([createdAt])
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  CRITICAL
+}
+
+model SiteSettings {
+  id                 String   @id @default(cuid())
+  siteName           String
+  siteUrl            String
+  siteLogo           String?
+  siteDescription    String?
+  contactEmail       String
+  whatsappPhone      String?
+  supportEmail       String?
+  twitterUrl         String?
+  githubUrl          String?
+  linkedinUrl        String?
+  instagramUrl       String?
+  chatbotEnabled     Boolean  @default(true)
+  contactFormEnabled Boolean  @default(true)
+  newsletterEnabled  Boolean  @default(true)
+  maintenanceMode    Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+  updatedByUserId    String?
+}
+
+model EmailTemplate {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  subject   String
+  htmlBody  String
+  textBody  String?
+  variables String?
+  status    TemplateStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([status])
+}
+
+enum TemplateStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+model ApiKey {
+  id        String       @id @default(cuid())
+  name      String
+  key       String       @unique
+  secret    String?
+  userId    String?
+  scope     String?
+  status    ApiKeyStatus @default(ACTIVE)
+  lastUsed  DateTime?
+  expiresAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+model Webhook {
+  id              String        @id @default(cuid())
+  name            String
+  url             String
+  events          String
+  secret          String
+  userId          String?
+  status          WebhookStatus @default(ACTIVE)
+  lastTriggeredAt DateTime?
+  failureCount    Int           @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+  @@index([userId])
+}
+
+enum WebhookStatus {
+  ACTIVE
+  INACTIVE
+  FAILED
+}
+
+model File {
+  id         String    @id @default(cuid())
+  filename   String
+  key        String    @unique
+  size       BigInt
+  mimeType   String
+  uploadedBy String?
+  uploadedAt DateTime  @default(now())
+  url        String?
+  expiresAt  DateTime?
+}

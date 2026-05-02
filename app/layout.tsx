@@ -1,9 +1,4 @@
-// app/layout.tsx
-
 import type { Metadata } from "next";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { Chatbot } from "@/components/chatbot/chatbot";
 import { metadata as siteMetadata } from "@/config/site";
 import "@/app/globals.css";
 
@@ -31,12 +26,7 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="min-h-screen flex flex-col bg-background text-foreground">
-        <Header />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
-        <Chatbot />
+        {children}
       </body>
     </html>
   );

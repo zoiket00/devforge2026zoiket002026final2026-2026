@@ -1,6 +1,7 @@
 // components/ui/button.tsx
 
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -58,31 +59,38 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       disabled,
       leftIcon,
       rightIcon,
+      asChild = false,
       children,
       ...props
     },
     ref
-  ) => (
-    <button
-      className={cn(buttonVariants({ variant, size, fullWidth, className }))}
-      disabled={disabled || loading}
-      ref={ref}
-      {...props}
-    >
-      {loading ? (
-        <>
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-          {children}
-        </>
-      ) : (
-        <>
-          {leftIcon && <span>{leftIcon}</span>}
-          {children}
-          {rightIcon && <span>{rightIcon}</span>}
-        </>
-      )}
-    </button>
-  )
+  ) => {
+    const Comp = asChild ? Slot : "button";
+
+    const content = loading ? (
+      <>
+        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        {children}
+      </>
+    ) : (
+      <>
+        {leftIcon && <span>{leftIcon}</span>}
+        {children}
+        {rightIcon && <span>{rightIcon}</span>}
+      </>
+    );
+
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, fullWidth, className }))}
+        disabled={asChild ? undefined : (disabled || loading)}
+        ref={ref}
+        {...props}
+      >
+        {asChild ? children : content}
+      </Comp>
+    );
+  }
 );
 
 Button.displayName = "Button";

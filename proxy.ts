@@ -1,9 +1,4 @@
-// middleware.ts
-// ┌─────────────────────────────────────────────────────────────┐
-// │  SECURITY MIDDLEWARE - Intercepta 100% de las requests      │
-// │  Rate limiting · CSRF · Headers · Bot detection · Geo-block │
-// └─────────────────────────────────────────────────────────────┘
-
+// proxy.ts
 import { NextRequest, NextResponse } from "next/server";
 import { securityHeaders } from "@/lib/security/headers";
 import { rateLimit } from "@/lib/security/rate-limit";
@@ -11,25 +6,22 @@ import { detectBot } from "@/lib/security/bot-detection";
 import { validateCsrf } from "@/lib/security/csrf";
 import { geoBlock } from "@/lib/security/geo-block";
 
-// ── Rutas que requieren verificación CSRF ──────────────────────
-const CSRF_ROUTES = ["/api/contact", "/api/newsletter", "/api/subscribe"];
+const CSRF_ROUTES: string[] = [];
 
-// ── Límites de rate por ruta ───────────────────────────────────
 const RATE_LIMITS: Record<string, { requests: number; window: number }> = {
-  "/api/contact":    { requests: 5,   window: 60  }, // 5/min
-  "/api/newsletter": { requests: 3,   window: 60  }, // 3/min
-  "/api/auth":       { requests: 10,  window: 60  }, // 10/min
-  "/api/":           { requests: 100, window: 60  }, // 100/min genérico
-  "default":         { requests: 300, window: 60  }, // 300/min resto
+  "/api/contact":    { requests: 5,   window: 60 },
+  "/api/newsletter": { requests: 3,   window: 60 },
+  "/api/auth":       { requests: 10,  window: 60 },
+  "/api/":           { requests: 100, window: 60 },
+  "default":         { requests: 300, window: 60 },
 };
 
-export async function middleware(req: NextRequest) {
-  const { pathname, origin } = req.nextUrl;
+export async function proxy(req: NextRequest) {
+  const { pathname } = req.nextUrl;
   const ip = getClientIP(req);
   const userAgent = req.headers.get("user-agent") || "";
   const response = NextResponse.next();
 
-  // ── 1. Bloquear IPs en blacklist ─────────────────────────────
   const blacklistCheck = await checkIPBlacklist(ip);
   if (blacklistCheck.blocked) {
     return new NextResponse(
@@ -38,7 +30,6 @@ export async function middleware(req: NextRequest) {
     );
   }
 
-  // ── 2. Detección de bots maliciosos ──────────────────────────
   if (pathname.startsWith("/api/")) {
     const botResult = detectBot(userAgent);
     if (botResult.isMalicious) {
@@ -50,7 +41,6 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // ── 3. Rate Limiting ─────────────────────────────────────────
   if (pathname.startsWith("/api/")) {
     const limitConfig = getRateLimit(pathname);
     const rateLimitResult = await rateLimit(ip, pathname, limitConfig);
@@ -76,16 +66,14 @@ export async function middleware(req: NextRequest) {
       );
     }
 
-    // Inyectar headers de rate limit
     response.headers.set("X-RateLimit-Limit", String(limitConfig.requests));
     response.headers.set("X-RateLimit-Remaining", String(rateLimitResult.remaining));
     response.headers.set("X-RateLimit-Reset", String(rateLimitResult.resetAt));
   }
 
-  // ── 4. Validación CSRF para rutas POST ───────────────────────
   const isCsrfRoute = CSRF_ROUTES.some((r) => pathname.startsWith(r));
   if (isCsrfRoute && req.method === "POST") {
-    const csrfResult = validateCsrf(req);
+    const csrfResult = await validateCsrf(req);
     if (!csrfResult.valid) {
       logSecurityEvent("CSRF_FAILED", { ip, pathname, reason: csrfResult.reason });
       return new NextResponse(
@@ -95,7 +83,6 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // ── 5. Bloqueo geográfico (opcional) ─────────────────────────
   const country = req.headers.get("cf-ipcountry") || "";
   const geoResult = geoBlock(country);
   if (geoResult.blocked) {
@@ -106,19 +93,16 @@ export async function middleware(req: NextRequest) {
     );
   }
 
-  // ── 6. Bloquear métodos HTTP no permitidos ───────────────────
   const allowedMethods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
   if (!allowedMethods.includes(req.method)) {
     return new NextResponse(null, { status: 405 });
   }
 
-  // ── 7. Detectar path traversal ───────────────────────────────
   if (containsPathTraversal(pathname)) {
     logSecurityEvent("PATH_TRAVERSAL", { ip, pathname });
     return new NextResponse(null, { status: 400 });
   }
 
-  // ── 8. Detectar inyección SQL en query params ────────────────
   const searchParams = req.nextUrl.searchParams.toString();
   if (containsSQLInjection(searchParams)) {
     logSecurityEvent("SQL_INJECTION_ATTEMPT", { ip, pathname, params: searchParams });
@@ -128,22 +112,20 @@ export async function middleware(req: NextRequest) {
     );
   }
 
-  // ── 9. Inyectar headers de seguridad ─────────────────────────
   const headers = securityHeaders();
   headers.forEach((header) => {
     response.headers.set(header.key, header.value);
   });
 
-  // ── 10. Registrar request para auditoría ─────────────────────
   if (pathname.startsWith("/api/")) {
     response.headers.set("X-Request-ID", generateRequestId());
     response.headers.set("X-Timestamp", new Date().toISOString());
   }
 
+  response.headers.set("x-pathname", pathname);
+
   return response;
 }
-
-// ── Helpers ─────────────────────────────────────────────────────
 
 function getClientIP(req: NextRequest): string {
   return (
@@ -164,20 +146,12 @@ function getRateLimit(pathname: string) {
 }
 
 async function checkIPBlacklist(ip: string) {
-  // Lista de IPs bloqueadas (en producción: consultar Redis o DB)
-  const BLACKLISTED_IPS: string[] = [
-    // Agregar IPs maliciosas aquí
-  ];
+  const BLACKLISTED_IPS: string[] = [];
   return { blocked: BLACKLISTED_IPS.includes(ip) };
 }
 
 function containsPathTraversal(pathname: string): boolean {
-  const patterns = [
-    /\.\./,           // ../
-    /%2e%2e/i,        // Encoded ../
-    /\.\.%2f/i,       // ..%2f
-    /%2f\.\./i,       // %2f../
-  ];
+  const patterns = [/\.\./, /%2e%2e/i, /\.\.%2f/i, /%2f\.\./i];
   return patterns.some((p) => p.test(pathname));
 }
 
@@ -199,26 +173,14 @@ function generateRequestId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function logSecurityEvent(
-  event: string,
-  data: Record<string, unknown>
-): void {
-  // En producción: Enviar a Sentry, Datadog, o LogRocket
+function logSecurityEvent(event: string, data: Record<string, unknown>): void {
   if (process.env.NODE_ENV !== "production") {
     console.warn(`[SECURITY:${event}]`, { timestamp: new Date().toISOString(), ...data });
   }
 }
 
-// ── Configuración de rutas del middleware ────────────────────────
 export const config = {
   matcher: [
-    /*
-     * Aplica a TODAS las rutas excepto:
-     * - _next/static (archivos estáticos)
-     * - _next/image (optimización de imágenes)
-     * - favicon.ico, robots.txt, sitemap.xml
-     * - Imágenes públicas
-     */
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|woff2?)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|admin|api/auth|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico|css|js|woff2?)$).*)",
   ],
 };

@@ -1,7 +1,8 @@
-// app/api/contact/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit } from "@/lib/security/rate-limit";
+import { PrismaClient } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   const ip =
@@ -18,7 +19,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, message } = await req.json();
+    const { name, email, message, company, service, budget } = await req.json();
 
     if (!name || !email || !message) {
       return NextResponse.json(
@@ -27,7 +28,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Email placeholder - funcionalidad básica
+    try {
+      await prisma.contactForm.create({
+        data: {
+          name,
+          email,
+          message,
+          company: company || null,
+          service: service || null,
+          budget: budget || null,
+          ipAddress: ip,
+          status: "NEW",
+          priority: "NORMAL",
+        },
+      });
+    } catch (dbError) {
+      console.error("DB error saving contact:", dbError);
+    }
+
     console.log("Contact form submitted:", { name, email, message });
 
     return NextResponse.json(
