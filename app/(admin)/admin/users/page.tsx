@@ -1,12 +1,10 @@
+import { prisma } from "@/lib/database/prisma";
+
 async function getUsers() {
   try {
-    const { PrismaClient } = await import("@prisma/client");
-    const prisma = new PrismaClient();
-    const users = await prisma.user.findMany({
+    return await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
     });
-    await prisma.$disconnect();
-    return users;
   } catch {
     return [];
   }

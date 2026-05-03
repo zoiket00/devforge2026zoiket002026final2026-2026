@@ -1,12 +1,10 @@
+import { prisma } from "@/lib/database/prisma";
+
 async function getContacts() {
   try {
-    const { PrismaClient } = await import("@prisma/client");
-    const prisma = new PrismaClient();
-    const contacts = await prisma.contactForm.findMany({
+    return await prisma.contactForm.findMany({
       orderBy: { createdAt: "desc" },
     });
-    await prisma.$disconnect();
-    return contacts;
   } catch {
     return [];
   }

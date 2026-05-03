@@ -1,11 +1,10 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth/auth.config";
+import { prisma } from "@/lib/database/prisma";
 
 async function getStats() {
   try {
-    const { PrismaClient } = await import("@prisma/client");
-    const prisma = new PrismaClient();
-    const [users, contacts, newsletter, recentContacts] = await Promise.all([
+    const [users, contacts, newsletter, recentContacts, newContacts] = await Promise.all([
       prisma.user.count(),
       prisma.contactForm.count(),
       prisma.newsletterSubscription.count(),
@@ -13,9 +12,8 @@ async function getStats() {
         orderBy: { createdAt: "desc" },
         take: 5,
       }),
+      prisma.contactForm.count({ where: { status: "NEW" } }),
     ]);
-    const newContacts = await prisma.contactForm.count({ where: { status: "NEW" } });
-    await prisma.$disconnect();
     return { users, contacts, newsletter, recentContacts, newContacts };
   } catch {
     return { users: 0, contacts: 0, newsletter: 0, recentContacts: [], newContacts: 0 };
