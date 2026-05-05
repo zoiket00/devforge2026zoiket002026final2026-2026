@@ -9,7 +9,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         mono: ["JetBrains Mono", "monospace"],
-        display: ["Unbounded", "sans-serif"],
+        display: ["Syne", "sans-serif"],
         body: ["Inter", "sans-serif"],
       },
       colors: {

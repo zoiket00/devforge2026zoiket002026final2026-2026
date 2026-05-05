@@ -31,7 +31,8 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     },
     ref
   ) => {
-    const selectId = id || `select-${Math.random()}`;
+    const generatedId = React.useId();
+    const selectId = id || `select-${generatedId}`;
 
     return (
       <div className="space-y-2">

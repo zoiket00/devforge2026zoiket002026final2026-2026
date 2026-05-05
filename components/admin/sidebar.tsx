@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -20,10 +21,13 @@ export function AdminSidebar() {
   return (
     <aside className="w-64 min-h-screen bg-card border-r border-border flex flex-col">
       <div className="px-6 py-5 border-b border-border">
-        <h1 className="font-display text-lg font-bold">
-          dev<span className="text-accent">forge</span>
-          <span className="text-muted-foreground font-mono text-xs ml-2">admin</span>
-        </h1>
+        <Link href="/admin" className="flex items-center gap-2">
+          <Image src="/logo.png" alt="SpaceSoft" width={24} height={24} className="object-contain" />
+          <h1 className="font-display text-lg font-bold">
+            Space<span className="text-accent">Soft</span>
+            <span className="text-muted-foreground font-mono text-xs ml-2">admin</span>
+          </h1>
+        </Link>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map((item) => {

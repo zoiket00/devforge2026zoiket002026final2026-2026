@@ -1,9 +1,8 @@
-// components/layout/header.tsx
-
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { siteConfig } from "@/config/site";
@@ -23,7 +22,6 @@ export function Header() {
 
   return (
     <>
-      {/* Desktop Header */}
       <header
         className={cn(
           "fixed top-0 left-0 right-0 z-40 transition-all duration-200",
@@ -33,20 +31,19 @@ export function Header() {
         )}
       >
         <div className="container-responsive flex items-center justify-between py-4">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center gap-2 font-display text-xl font-bold tracking-tight"
-          >
-            <span className="h-6 w-6 rounded-md bg-accent flex items-center justify-center text-accent-foreground">
-              ■
-            </span>
-            <span>
-              dev<span className="text-accent">forge</span>
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/logo.png"
+              alt="SpaceSoft"
+              width={32}
+              height={32}
+              className="object-contain"
+            />
+            <span className="font-display text-xl font-bold tracking-tight">
+              Space<span className="text-accent">Soft</span>
             </span>
           </Link>
 
-          {/* Navigation */}
           <nav className="hidden md:flex items-center gap-1">
             {siteConfig.mainNav.map((item) => (
               <Link
@@ -64,12 +61,8 @@ export function Header() {
             ))}
           </nav>
 
-          {/* CTA + Mobile Menu */}
           <div className="flex items-center gap-4">
-            <Button
-              asChild
-              className="hidden sm:inline-flex"
-            >
+            <Button asChild className="hidden sm:inline-flex">
               <a href={siteConfig.links.whatsapp} target="_blank" rel="noopener noreferrer">
                 Contactar
               </a>
@@ -90,7 +83,6 @@ export function Header() {
         </div>
       </header>
 
-      {/* Mobile Menu */}
       {mobileOpen && (
         <div className="fixed inset-0 top-16 z-30 md:hidden bg-background border-b border-border">
           <nav className="container-responsive py-6 space-y-2">
@@ -110,10 +102,7 @@ export function Header() {
               </Link>
             ))}
             <div className="pt-4 border-t border-border">
-              <Button
-                asChild
-                fullWidth
-              >
+              <Button asChild fullWidth>
                 <a href={siteConfig.links.whatsapp} target="_blank" rel="noopener noreferrer">
                   Contactar
                 </a>
@@ -123,7 +112,6 @@ export function Header() {
         </div>
       )}
 
-      {/* Spacer */}
       <div className="h-16" />
     </>
   );

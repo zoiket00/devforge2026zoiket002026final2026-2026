@@ -1,9 +1,8 @@
-// app/page.tsx
+// app/(site)/page.tsx
 
 import { Hero, Services, Projects, Testimonials, CTA } from "@/components/sections";
 import { Container, Section } from "@/components/layout/container";
 
-// Datos de ejemplo
 const featuredServices = [
   {
     id: "web-app",
@@ -78,8 +77,7 @@ const testimonials = [
     role: "CEO",
     company: "TechStart",
     image: "",
-    content:
-      "DevForge entregó exactamente lo que prometieron. Profesionales, puntuales y muy dedicados.",
+    content: "SpaceSoft entregó exactamente lo que prometieron. Profesionales, puntuales y muy dedicados.",
     rating: 5 as const,
   },
   {
@@ -88,8 +86,7 @@ const testimonials = [
     role: "Product Manager",
     company: "InnovaHub",
     image: "",
-    content:
-      "La mejor decisión fue confiarles nuestro proyecto. Resultados excepcionales.",
+    content: "La mejor decisión fue confiarles nuestro proyecto. Resultados excepcionales.",
     rating: 5 as const,
   },
   {
@@ -98,8 +95,7 @@ const testimonials = [
     role: "Founder",
     company: "DataFlow",
     image: "",
-    content:
-      "Equipo profesional con expertise real. Recomendado 100%.",
+    content: "Equipo profesional con expertise real. Recomendado 100%.",
     rating: 5 as const,
   },
 ];
@@ -107,9 +103,8 @@ const testimonials = [
 export default function Home() {
   return (
     <>
-      {/* Hero */}
       <Hero
-        badge="🚀 Powered by 2026 Tech Stack"
+        badge="Powered by 2026 Tech Stack"
         title={
           <>
             Código que funciona.
@@ -118,18 +113,11 @@ export default function Home() {
           </>
         }
         description="Micro-estudio de desarrollo full-stack. Desde MVPs hasta aplicaciones empresariales. React, Node, IA - todo hecho con excelencia."
-        cta={{
-          text: "Iniciar proyecto",
-          href: "/contact",
-        }}
-        secondaryCta={{
-          text: "Ver portafolio",
-          href: "/work",
-        }}
+        cta={{ text: "Iniciar proyecto", href: "/contact" }}
+        secondaryCta={{ text: "Ver portafolio", href: "/work" }}
         gradient
       />
 
-      {/* Services */}
       <Services
         title="Servicios"
         description="Soluciones adaptadas a tu proyecto"
@@ -137,7 +125,6 @@ export default function Home() {
         columns={3}
       />
 
-      {/* Projects */}
       <Projects
         title="Proyectos Destacados"
         description="Trabajos que demuestran nuestra expertise"
@@ -145,65 +132,35 @@ export default function Home() {
         featured
       />
 
-      {/* Stats Section */}
       <Section>
         <Container>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div className="space-y-2">
-              <div className="font-display text-4xl md:text-5xl font-bold text-accent">
-                50+
+            {[
+              { value: "50+", label: "Proyectos completados" },
+              { value: "30+", label: "Clientes satisfechos" },
+              { value: "99.9%", label: "Uptime garantizado" },
+              { value: "24h", label: "Respuesta máxima" },
+            ].map((stat) => (
+              <div key={stat.label} className="space-y-2">
+                <div className="font-display text-4xl md:text-5xl font-bold text-accent">{stat.value}</div>
+                <p className="font-mono text-sm text-muted-foreground">{stat.label}</p>
               </div>
-              <p className="font-mono text-sm text-muted-foreground">
-                Proyectos completados
-              </p>
-            </div>
-            <div className="space-y-2">
-              <div className="font-display text-4xl md:text-5xl font-bold text-accent">
-                30+
-              </div>
-              <p className="font-mono text-sm text-muted-foreground">
-                Clientes satisfechos
-              </p>
-            </div>
-            <div className="space-y-2">
-              <div className="font-display text-4xl md:text-5xl font-bold text-accent">
-                99.9%
-              </div>
-              <p className="font-mono text-sm text-muted-foreground">
-                Uptime garantizado
-              </p>
-            </div>
-            <div className="space-y-2">
-              <div className="font-display text-4xl md:text-5xl font-bold text-accent">
-                24h
-              </div>
-              <p className="font-mono text-sm text-muted-foreground">
-                Respuesta máxima
-              </p>
-            </div>
+            ))}
           </div>
         </Container>
       </Section>
 
-      {/* Testimonials */}
       <Testimonials
         title="Lo que dicen nuestros clientes"
         description="Feedback real de proyectos completados"
         testimonials={testimonials}
       />
 
-      {/* CTA */}
       <CTA
         title="¿Listo para tu proyecto?"
         description="Primera consulta gratis. Sin compromisos. Propuesta detallada en 24 horas."
-        primaryCta={{
-          text: "Agendar llamada",
-          href: "/contact",
-        }}
-        secondaryCta={{
-          text: "Contactar por WhatsApp",
-          href: "https://wa.me/573001234567",
-        }}
+        primaryCta={{ text: "Agendar llamada", href: "/contact" }}
+        secondaryCta={{ text: "Contactar por WhatsApp", href: "https://wa.me/573001234567" }}
       />
     </>
   );
