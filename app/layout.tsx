@@ -21,8 +21,8 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#05070a" />
         <meta name="color-scheme" content="dark" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" href="/SpaceSoft_6.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/SpaceSoft_6.png" />
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="min-h-screen flex flex-col bg-background text-foreground">
